@@ -1,0 +1,16 @@
+{
+  "id": "org.vuniper.web.releases",
+  "version": "1.0.0",
+  "name": "Vuniper Web Releases",
+  "description": "Daily updated high-quality web releases from Vuniper.com",
+  "resources": ["catalog"],
+  "types": ["movie"],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "vuniper_web",
+      "name": "Vuniper Web"
+    }
+  ],
+  "idPrefixes": ["tt"]
+}
