@@ -1,21 +1,19 @@
-import FirecrawlApp from '@mendable/firecrawl-js';
+import { Firecrawl } from '@mendable/firecrawl-js'; // Use the new Firecrawl export
 import fs from 'fs';
 import path from 'path';
 
-// The new SDK uses the FirecrawlApp class name
-const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+// Initializing the v2 client
+const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY });
 
 async function run() {
   try {
-    console.log("Fetching Vuniper via standard scrape...");
+    console.log("Fetching Vuniper via v2 standard scrape...");
     
-    // In SDK v2, use .scrapeUrl or .scrape depending on your exact version.
-    // .scrapeUrl is the most stable method for single-page JSON extraction.
-    const result = await app.scrapeUrl('https://vuniper.com/movies/web', {
+    const result = await firecrawl.scrape('https://vuniper.com/movies/web', {
       formats: [
         {
           type: 'json',
-          prompt: "Extract the latest 20 movie releases. Find the IMDb ID (tt...) and the movie title.",
+          prompt: "Extract the latest movie releases. Format as a 'metas' array with id, type (movie), and name.",
           schema: {
             type: "object",
             properties: {
@@ -38,12 +36,10 @@ async function run() {
       ]
     });
 
-    // Check if result.data.json exists (v2 format)
-    const movieData = result.data?.json || result.json;
-
-    if (!result.success || !movieData || !movieData.metas.length) {
-      console.error("Debug Result:", JSON.stringify(result, null, 2));
-      throw new Error("Scrape failed or found no movies.");
+    // In v2, the structured JSON is found directly in result.json
+    if (!result.success || !result.json?.metas) {
+      console.error("Scrape failed. Full response:", JSON.stringify(result, null, 2));
+      throw new Error("No movie data found.");
     }
 
     const dir = path.join(process.cwd(), 'catalog', 'movie');
@@ -51,10 +47,10 @@ async function run() {
 
     fs.writeFileSync(
       path.join(dir, 'vuniper_web.json'), 
-      JSON.stringify({ metas: movieData.metas }, null, 2)
+      JSON.stringify(result.json, null, 2)
     );
 
-    console.log(`Success! Saved ${movieData.metas.length} movies.`);
+    console.log(`Success! Saved ${result.json.metas.length} movies using v2.`);
   } catch (error) {
     console.error("Scraper Error:", error.message);
     process.exit(1);
