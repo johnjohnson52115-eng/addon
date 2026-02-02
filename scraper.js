@@ -8,8 +8,8 @@ async function run() {
   try {
     console.log("Fetching Vuniper via standard scrape...");
     
-    // Standard .scrape() with a schema is much cheaper than .agent()
-    const result = await app.scrapeUrl('https://vuniper.com/movies/web', {
+    // CHANGED: .scrape() is the correct method name in the new SDK
+    const result = await app.scrape('https://vuniper.com/movies/web', {
       formats: ['json'],
       jsonOptions: {
         schema: {
@@ -37,7 +37,6 @@ async function run() {
       throw new Error("Scrape failed or found no movies.");
     }
 
-    // Save to the catalog folder
     const dir = path.join(process.cwd(), 'catalog', 'movie');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -46,7 +45,7 @@ async function run() {
       JSON.stringify(result.data, null, 2)
     );
 
-    console.log(`Success! Saved ${result.data.metas.length} movies at a low credit cost.`);
+    console.log(`Success! Saved ${result.data.metas.length} movies.`);
   } catch (error) {
     console.error("Scraper Error:", error.message);
     process.exit(1);
