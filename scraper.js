@@ -15,15 +15,14 @@ async function scrapeVuniper() {
         const $ = cheerio.load(data);
         const movies = [];
 
-        // Updated selector: Looks for any link containing /title/tt
+        // Targeted selector for Vuniper's movie grid
         $('a').each((i, el) => {
             const href = $(el).attr('href') || '';
             const imdbMatch = href.match(/tt\d+/);
             
             if (imdbMatch) {
                 const imdbId = imdbMatch[0];
-                // Get the title from the nearest heading or the link text
-                const name = $(el).text().trim() || $(el).closest('div').find('h1, h2, h3').first().text().trim();
+                const name = $(el).text().trim();
 
                 if (!movies.find(m => m.id === imdbId)) {
                     movies.push({
@@ -35,6 +34,11 @@ async function scrapeVuniper() {
             }
         });
 
+        // ERROR HANDLING: If the list is empty, stop and fail the workflow
+        if (movies.length === 0) {
+            throw new Error("Scraper found 0 movies. Vuniper might have changed their layout.");
+        }
+
         const dir = path.join(__dirname, 'catalog', 'movie');
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -43,8 +47,9 @@ async function scrapeVuniper() {
         
         console.log(`Success! Found ${movies.length} movies.`);
     } catch (error) {
-        console.error("Scraping failed:", error.message);
-        process.exit(1);
+        // This ensures the GitHub Action shows a RED "X" if something goes wrong
+        console.error("CRITICAL ERROR:", error.message);
+        process.exit(1); 
     }
 }
 
