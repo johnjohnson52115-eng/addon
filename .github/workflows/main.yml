@@ -1,38 +1,34 @@
 name: Run scraper daily
+
 on:
   schedule:
-    - cron: '0 0 * * *' # Midnight every day
-  workflow_dispatch: {} # Manual run button
-
-permissions:
-  contents: write
+    - cron: '0 0 * * *' # Runs daily at midnight
+  workflow_dispatch: # Allows manual runs
 
 jobs:
-  run-scraper:
+  scrape:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-
+          
       - name: Install dependencies
-        run: npm install axios cheerio
-
+        run: npm install @mendable/firecrawl-js
+        
       - name: Run scraper
         run: node scraper.js
-
+        env:
+          # This connects your secret to the scraper.js file safely
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          
       - name: Commit and push changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: update scraped movie list"
-            git push
-          fi
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add catalog/movie/vuniper_web.json
+          git commit -m "Update movie list" || echo "No changes to commit"
+          git push
